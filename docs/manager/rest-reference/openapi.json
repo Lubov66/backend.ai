@@ -4657,12 +4657,6 @@
       "CreateRevisionRequest": {
         "description": "Request to create a new revision for an existing deployment.",
         "properties": {
-          "deployment_id": {
-            "description": "Deployment ID",
-            "format": "uuid",
-            "title": "Deployment Id",
-            "type": "string"
-          },
           "name": {
             "anyOf": [
               {
@@ -4714,7 +4708,6 @@
           }
         },
         "required": [
-          "deployment_id",
           "cluster_config",
           "resource_config",
           "image",
