@@ -271,15 +271,15 @@ class DeploymentAPIHandler:
         """Create a new revision for a deployment."""
         deployment_processors = self._get_deployment_processors(processors_ctx.processors)
 
+        # Set deployment_id from path parameter
+        body.parsed.deployment_id = path.parsed.deployment_id
+
         # Build creator from request using adapter
         creator = self.create_revision_adapter.build_creator(body.parsed)
 
         # Call service action
         action_result = await deployment_processors.create_model_revision.wait_for_complete(
-            CreateModelRevisionAction(
-                model_deployment_id=path.parsed.deployment_id,
-                creator=creator,
-            )
+            CreateModelRevisionAction(creator=creator)
         )
 
         # Build response

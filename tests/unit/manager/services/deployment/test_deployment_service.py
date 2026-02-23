@@ -224,9 +224,10 @@ class ModelRevisionFixtures(DeploymentServiceBaseFixtures):
 
     @pytest.fixture
     def revision_creator(
-        self, image_id: uuid.UUID, model_vfolder_id: uuid.UUID
+        self, deployment_id: uuid.UUID, image_id: uuid.UUID, model_vfolder_id: uuid.UUID
     ) -> ModelRevisionCreator:
         return ModelRevisionCreator(
+            model_deployment_id=deployment_id,
             image_id=image_id,
             resource_spec=ResourceSpec(
                 cluster_mode=ClusterMode.SINGLE_NODE,
@@ -291,10 +292,7 @@ class TestAddModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=None)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = AddModelRevisionAction(
-            model_deployment_id=deployment_id,
-            adder=revision_creator,
-        )
+        action = AddModelRevisionAction(adder=revision_creator)
         result = await processors.add_model_revision.wait_for_complete(action)
 
         assert result.revision == revision_data
@@ -325,10 +323,7 @@ class TestAddModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=3)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = AddModelRevisionAction(
-            model_deployment_id=deployment_id,
-            adder=revision_creator,
-        )
+        action = AddModelRevisionAction(adder=revision_creator)
         result = await processors.add_model_revision.wait_for_complete(action)
 
         assert result.revision == revision_data
@@ -349,10 +344,7 @@ class TestAddModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=None)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = AddModelRevisionAction(
-            model_deployment_id=deployment_id,
-            adder=revision_creator,
-        )
+        action = AddModelRevisionAction(adder=revision_creator)
         await processors.add_model_revision.wait_for_complete(action)
 
         creator_arg = mock_deployment_repository.create_revision.call_args[0][0]
@@ -386,6 +378,7 @@ class TestAddModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
         creator_with_none = ModelRevisionCreator(
+            model_deployment_id=deployment_id,
             image_id=image_id,
             resource_spec=ResourceSpec(
                 cluster_mode=ClusterMode.SINGLE_NODE,
@@ -402,10 +395,7 @@ class TestAddModelRevision(ModelRevisionFixtures):
             ),
         )
 
-        action = AddModelRevisionAction(
-            model_deployment_id=deployment_id,
-            adder=creator_with_none,
-        )
+        action = AddModelRevisionAction(adder=creator_with_none)
         await processors.add_model_revision.wait_for_complete(action)
 
         creator_arg = mock_deployment_repository.create_revision.call_args[0][0]
@@ -431,10 +421,7 @@ class TestCreateModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=None)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = CreateModelRevisionAction(
-            model_deployment_id=deployment_id,
-            creator=revision_creator,
-        )
+        action = CreateModelRevisionAction(creator=revision_creator)
         result = await processors.create_model_revision.wait_for_complete(action)
 
         assert result.revision == revision_data
@@ -463,10 +450,7 @@ class TestCreateModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=5)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = CreateModelRevisionAction(
-            model_deployment_id=deployment_id,
-            creator=revision_creator,
-        )
+        action = CreateModelRevisionAction(creator=revision_creator)
         result = await processors.create_model_revision.wait_for_complete(action)
 
         assert result.revision == revision_data
@@ -487,10 +471,7 @@ class TestCreateModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=None)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = CreateModelRevisionAction(
-            model_deployment_id=deployment_id,
-            creator=revision_creator,
-        )
+        action = CreateModelRevisionAction(creator=revision_creator)
         await processors.create_model_revision.wait_for_complete(action)
 
         creator_arg = mock_deployment_repository.create_revision.call_args[0][0]
@@ -526,6 +507,7 @@ class TestCreateModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
         creator_with_none = ModelRevisionCreator(
+            model_deployment_id=deployment_id,
             image_id=image_id,
             resource_spec=ResourceSpec(
                 cluster_mode=ClusterMode.SINGLE_NODE,
@@ -542,10 +524,7 @@ class TestCreateModelRevision(ModelRevisionFixtures):
             ),
         )
 
-        action = CreateModelRevisionAction(
-            model_deployment_id=deployment_id,
-            creator=creator_with_none,
-        )
+        action = CreateModelRevisionAction(creator=creator_with_none)
         await processors.create_model_revision.wait_for_complete(action)
 
         creator_arg = mock_deployment_repository.create_revision.call_args[0][0]
@@ -587,10 +566,7 @@ class TestCreateModelRevision(ModelRevisionFixtures):
         mock_deployment_repository.get_latest_revision_number = AsyncMock(return_value=None)
         mock_deployment_repository.create_revision = AsyncMock(return_value=revision_data)
 
-        action = CreateModelRevisionAction(
-            model_deployment_id=deployment_id,
-            creator=revision_creator,
-        )
+        action = CreateModelRevisionAction(creator=revision_creator)
         await processors.create_model_revision.wait_for_complete(action)
 
         creator_arg = mock_deployment_repository.create_revision.call_args[0][0]

@@ -289,6 +289,7 @@ class CreateDeploymentRequest(BaseRequestModel):
 class CreateRevisionRequest(BaseRequestModel):
     """Request to create a new revision for an existing deployment."""
 
+    deployment_id: UUID = Field(description="Deployment ID")
     name: str | None = Field(default=None, description="Revision name")
     cluster_config: ClusterConfigInput = Field(description="Cluster configuration")
     resource_config: ResourceConfigInput = Field(description="Resource configuration")

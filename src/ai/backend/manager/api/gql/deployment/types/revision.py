@@ -548,6 +548,7 @@ class CreateRevisionInput:
         )
 
         return ModelRevisionCreator(
+            model_deployment_id=UUID(str(self.deployment_id)),
             image_id=UUID(str(self.image.id)),
             resource_spec=resource_spec,
             mounts=mounts,
@@ -607,6 +608,7 @@ class AddRevisionInput:
         )
 
         return ModelRevisionCreator(
+            model_deployment_id=UUID(str(self.deployment_id)),
             image_id=UUID(str(self.image.id)),
             resource_spec=resource_spec,
             mounts=mounts,
