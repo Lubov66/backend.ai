@@ -45,6 +45,7 @@ from ai.backend.manager.repositories.deployment.creators import (
     DeploymentNetworkFields,
     DeploymentReplicaFields,
     DeploymentResourceFields,
+    DeploymentRevisionCreatorSpec,
     EndpointTokenCreatorSpec,
     ModelRevisionFields,
 )
@@ -481,27 +482,76 @@ class DeploymentService:
     async def add_model_revision(
         self, action: AddModelRevisionAction
     ) -> AddModelRevisionActionResult:
-        # TODO: Implement full revision creation logic
-        # This requires integration with the controller's revision generator system:
-        # 1. Get default architecture from scaling group
-        # 2. Use revision generator to resolve image and build ModelRevisionSpec
-        # 3. Get latest revision number via get_latest_revision_number()
-        # 4. Build DeploymentRevisionCreatorSpec and create revision
-        raise NotImplementedError(
-            "add_model_revision requires controller's revision generator for image resolution. "
-            "Use create_legacy_deployment for deployment creation with revision."
+        endpoint_info = await self._deployment_repository.get_endpoint_info(
+            action.model_deployment_id
         )
+        latest_revision_number = await self._deployment_repository.get_latest_revision_number(
+            action.model_deployment_id
+        )
+        next_revision_number = (latest_revision_number or 0) + 1
+
+        adder = action.adder
+        spec = DeploymentRevisionCreatorSpec(
+            endpoint_id=action.model_deployment_id,
+            revision_number=next_revision_number,
+            image_id=adder.image_id,
+            resource_group=endpoint_info.metadata.resource_group,
+            resource_slots=ResourceSlot(adder.resource_spec.resource_slots),
+            resource_opts=adder.resource_spec.resource_opts or {},
+            cluster_mode=adder.resource_spec.cluster_mode,
+            cluster_size=adder.resource_spec.cluster_size,
+            model_id=adder.mounts.model_vfolder_id,
+            model_mount_destination=adder.mounts.model_mount_destination,
+            model_definition_path=adder.mounts.model_definition_path,
+            model_definition=None,
+            startup_command=adder.execution.startup_command,
+            bootstrap_script=adder.execution.bootstrap_script,
+            environ=adder.execution.environ or {},
+            callback_url=str(adder.execution.callback_url)
+            if adder.execution.callback_url
+            else None,
+            runtime_variant=adder.execution.runtime_variant,
+            extra_mounts=[],
+        )
+        revision_data = await self._deployment_repository.create_revision(Creator(spec=spec))
+        return AddModelRevisionActionResult(revision=revision_data)
 
     async def create_model_revision(
         self, action: CreateModelRevisionAction
     ) -> CreateModelRevisionActionResult:
-        # TODO: Implement full revision creation logic
-        # Note: CreateModelRevisionAction is missing deployment_id field
-        # This requires integration with the controller's revision generator system
-        raise NotImplementedError(
-            "create_model_revision requires controller's revision generator for image resolution "
-            "and is missing deployment_id in action definition."
+        endpoint_info = await self._deployment_repository.get_endpoint_info(
+            action.model_deployment_id
         )
+        latest_revision_number = await self._deployment_repository.get_latest_revision_number(
+            action.model_deployment_id
+        )
+        next_revision_number = (latest_revision_number or 0) + 1
+
+        creator = action.creator
+        spec = DeploymentRevisionCreatorSpec(
+            endpoint_id=action.model_deployment_id,
+            revision_number=next_revision_number,
+            image_id=creator.image_id,
+            resource_group=endpoint_info.metadata.resource_group,
+            resource_slots=ResourceSlot(creator.resource_spec.resource_slots),
+            resource_opts=creator.resource_spec.resource_opts or {},
+            cluster_mode=creator.resource_spec.cluster_mode,
+            cluster_size=creator.resource_spec.cluster_size,
+            model_id=creator.mounts.model_vfolder_id,
+            model_mount_destination=creator.mounts.model_mount_destination,
+            model_definition_path=creator.mounts.model_definition_path,
+            model_definition=None,
+            startup_command=creator.execution.startup_command,
+            bootstrap_script=creator.execution.bootstrap_script,
+            environ=creator.execution.environ or {},
+            callback_url=str(creator.execution.callback_url)
+            if creator.execution.callback_url
+            else None,
+            runtime_variant=creator.execution.runtime_variant,
+            extra_mounts=[],
+        )
+        revision_data = await self._deployment_repository.create_revision(Creator(spec=spec))
+        return CreateModelRevisionActionResult(revision=revision_data)
 
     async def get_revision_by_id(
         self, action: GetRevisionByIdAction

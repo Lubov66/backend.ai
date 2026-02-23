@@ -141,7 +141,10 @@ async def create_model_revision(
     """Create a new model revision without attaching it to any deployment."""
     processor = info.context.processors.deployment
     result = await processor.create_model_revision.wait_for_complete(
-        CreateModelRevisionAction(creator=input.to_model_revision_creator())
+        CreateModelRevisionAction(
+            model_deployment_id=UUID(input.deployment_id),
+            creator=input.to_model_revision_creator(),
+        )
     )
 
     return CreateRevisionPayload(revision=ModelRevision.from_dataclass(result.revision))

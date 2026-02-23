@@ -264,7 +264,7 @@ class DeploymentAPIHandler:
     @api_handler
     async def create_revision(
         self,
-        _path: PathParam[DeploymentPathParam],
+        path: PathParam[DeploymentPathParam],
         body: BodyParam[CreateRevisionRequest],
         processors_ctx: ProcessorsCtx,
     ) -> APIResponse:
@@ -276,7 +276,10 @@ class DeploymentAPIHandler:
 
         # Call service action
         action_result = await deployment_processors.create_model_revision.wait_for_complete(
-            CreateModelRevisionAction(creator=creator)
+            CreateModelRevisionAction(
+                model_deployment_id=path.parsed.deployment_id,
+                creator=creator,
+            )
         )
 
         # Build response

@@ -499,6 +499,7 @@ class ExtraVFolderMountInput:
     description="Added in 25.19.0. Input for creating a revision without attaching to a deployment."
 )
 class CreateRevisionInput:
+    deployment_id: ID
     name: str | None = None
     cluster_config: ClusterConfigInput
     resource_config: ResourceConfigInput
