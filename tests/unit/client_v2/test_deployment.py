@@ -268,7 +268,6 @@ class TestRevisionOperations:
         dc = _make_deployment_client(mock_session)
 
         request = CreateRevisionRequest(
-            deployment_id=_SAMPLE_DEPLOYMENT_ID,
             cluster_config=ClusterConfigInput(mode=ClusterMode.SINGLE_NODE, size=1),
             resource_config=ResourceConfigInput(
                 resource_group="default",

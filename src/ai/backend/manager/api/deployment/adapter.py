@@ -511,15 +511,18 @@ class CreateDeploymentAdapter:
 class CreateRevisionAdapter:
     """Adapter for converting create revision request to creators."""
 
-    def build_creator(self, request: CreateRevisionRequest) -> ModelRevisionCreator:
+    def build_creator(
+        self, deployment_id: UUID, request: CreateRevisionRequest
+    ) -> ModelRevisionCreator:
         """
         Convert CreateRevisionRequest to ModelRevisionCreator.
 
         Args:
+            deployment_id: Deployment ID from path parameter
             request: Create revision request DTO
 
         Returns:
             ModelRevisionCreator for service layer
         """
         deployment_adapter = CreateDeploymentAdapter()
-        return deployment_adapter._build_revision_creator(request.deployment_id, request)
+        return deployment_adapter._build_revision_creator(deployment_id, request)
