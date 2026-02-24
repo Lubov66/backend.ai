@@ -272,7 +272,7 @@ class DeploymentAPIHandler:
         deployment_processors = self._get_deployment_processors(processors_ctx.processors)
 
         # Build creator from request using adapter
-        creator = self.create_revision_adapter.build_creator(path.parsed.deployment_id, body.parsed)
+        creator = self.create_revision_adapter.build_creator(body.parsed)
 
         # Call service action
         action_result = await deployment_processors.create_model_revision.wait_for_complete(

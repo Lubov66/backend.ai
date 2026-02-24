@@ -402,7 +402,7 @@ class CreateDeploymentAdapter:
         # Build model revision creator
         # deployment_id is not yet known during deployment creation;
         # it will be assigned by the repository layer.
-        model_revision = self._build_revision_creator(uuid4(), request.initial_revision)
+        model_revision = self._build_revision_creator(request.initial_revision)
 
         # Build policy config
         policy = self._build_policy_config(request.default_deployment_strategy)
@@ -417,7 +417,6 @@ class CreateDeploymentAdapter:
 
     def _build_revision_creator(
         self,
-        deployment_id: UUID,
         revision_input: Any,  # RevisionInput or CreateRevisionRequest
     ) -> ModelRevisionCreator:
         """Build ModelRevisionCreator from revision input."""
@@ -468,8 +467,8 @@ class CreateDeploymentAdapter:
         )
 
         return ModelRevisionCreator(
-            model_deployment_id=deployment_id,
             image_id=revision_input.image.id,
+            resource_group_name=revision_input.resource_config.resource_group,
             resource_spec=resource_spec,
             mounts=mounts,
             execution=execution,
@@ -511,18 +510,15 @@ class CreateDeploymentAdapter:
 class CreateRevisionAdapter:
     """Adapter for converting create revision request to creators."""
 
-    def build_creator(
-        self, deployment_id: UUID, request: CreateRevisionRequest
-    ) -> ModelRevisionCreator:
+    def build_creator(self, request: CreateRevisionRequest) -> ModelRevisionCreator:
         """
         Convert CreateRevisionRequest to ModelRevisionCreator.
 
         Args:
-            deployment_id: Deployment ID from path parameter
             request: Create revision request DTO
 
         Returns:
             ModelRevisionCreator for service layer
         """
         deployment_adapter = CreateDeploymentAdapter()
-        return deployment_adapter._build_revision_creator(deployment_id, request)
+        return deployment_adapter._build_revision_creator(request)
