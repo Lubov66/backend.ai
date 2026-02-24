@@ -43,9 +43,6 @@ from ai.backend.manager.services.deployment.actions.deployment_policy import (
 from ai.backend.manager.services.deployment.actions.model_revision.add_model_revision import (
     AddModelRevisionAction,
 )
-from ai.backend.manager.services.deployment.actions.model_revision.create_model_revision import (
-    CreateModelRevisionAction,
-)
 from ai.backend.manager.services.deployment.processors import DeploymentProcessors
 from ai.backend.manager.services.deployment.service import DeploymentService
 from ai.backend.manager.sokovan.deployment import DeploymentController
@@ -423,146 +420,6 @@ class TestAddModelRevision(ModelRevisionFixtures):
         assert spec.resource_opts == {}
 
 
-class TestCreateModelRevision(ModelRevisionFixtures):
-    """Tests for DeploymentService.create_model_revision
-
-    create_model_revision creates orphan revisions (not attached to any deployment).
-    """
-
-    @pytest.fixture
-    def orphan_revision_creator(
-        self, image_id: uuid.UUID, model_vfolder_id: uuid.UUID
-    ) -> ModelRevisionCreator:
-        """Creator for orphan revision (no deployment)."""
-        return ModelRevisionCreator(
-            image_id=image_id,
-            resource_group_name="my-rg",
-            resource_spec=ResourceSpec(
-                cluster_mode=ClusterMode.SINGLE_NODE,
-                cluster_size=1,
-                resource_slots={"cpu": "4", "mem": "8g"},
-                resource_opts={"shmem": "1g"},
-            ),
-            mounts=VFolderMountsCreator(
-                model_vfolder_id=model_vfolder_id,
-                model_definition_path="model-definition.yaml",
-                model_mount_destination="/models",
-            ),
-            execution=ExecutionSpec(
-                startup_command="python serve.py",
-                bootstrap_script="pip install -r requirements.txt",
-                environ={"CUDA_VISIBLE_DEVICES": "0"},
-                runtime_variant=RuntimeVariant.VLLM,
-                callback_url=None,
-            ),
-        )
-
-    @pytest.fixture
-    def orphan_revision_creator_with_none_environ(
-        self, image_id: uuid.UUID, model_vfolder_id: uuid.UUID
-    ) -> ModelRevisionCreator:
-        """Orphan creator with None environ and resource_opts for edge case testing."""
-        return ModelRevisionCreator(
-            image_id=image_id,
-            resource_group_name="my-rg",
-            resource_spec=ResourceSpec(
-                cluster_mode=ClusterMode.SINGLE_NODE,
-                cluster_size=1,
-                resource_slots={"cpu": "2"},
-                resource_opts=None,
-            ),
-            mounts=VFolderMountsCreator(
-                model_vfolder_id=model_vfolder_id,
-            ),
-            execution=ExecutionSpec(
-                runtime_variant=RuntimeVariant.VLLM,
-                environ=None,
-            ),
-        )
-
-    async def test_create_model_revision_creates_orphan(
-        self,
-        processors: DeploymentProcessors,
-        mock_deployment_repository: MagicMock,
-        orphan_revision_creator: ModelRevisionCreator,
-        revision_data: ModelRevisionData,
-    ) -> None:
-        """Creating a revision should create an orphan with endpoint_id=None."""
-        action = CreateModelRevisionAction(creator=orphan_revision_creator)
-        result = await processors.create_model_revision.wait_for_complete(action)
-
-        assert result.revision == revision_data
-        mock_deployment_repository.get_endpoint_info.assert_not_called()
-        mock_deployment_repository.get_latest_revision_number.assert_not_called()
-        mock_deployment_repository.create_revision.assert_called_once()
-
-        call_args = mock_deployment_repository.create_revision.call_args
-        assert call_args[0][0] is None
-        creator_arg = call_args[0][1]
-        spec = creator_arg.spec
-        assert spec.revision_number == 0
-        assert spec.image_id == orphan_revision_creator.image_id
-
-    async def test_create_model_revision_uses_creator_resource_group(
-        self,
-        processors: DeploymentProcessors,
-        mock_deployment_repository: MagicMock,
-        orphan_revision_creator: ModelRevisionCreator,
-    ) -> None:
-        """resource_group should come from the creator's resource_group_name."""
-        action = CreateModelRevisionAction(creator=orphan_revision_creator)
-        await processors.create_model_revision.wait_for_complete(action)
-
-        creator_arg = mock_deployment_repository.create_revision.call_args[0][1]
-        assert creator_arg.spec.resource_group == "my-rg"
-
-    async def test_create_model_revision_maps_all_fields(
-        self,
-        processors: DeploymentProcessors,
-        mock_deployment_repository: MagicMock,
-        orphan_revision_creator: ModelRevisionCreator,
-    ) -> None:
-        """All fields from ModelRevisionCreator should be mapped to the spec correctly."""
-        action = CreateModelRevisionAction(creator=orphan_revision_creator)
-        await processors.create_model_revision.wait_for_complete(action)
-
-        creator_arg = mock_deployment_repository.create_revision.call_args[0][1]
-        spec = creator_arg.spec
-        assert spec.resource_slots == ResourceSlot(
-            orphan_revision_creator.resource_spec.resource_slots
-        )
-        assert spec.resource_opts == orphan_revision_creator.resource_spec.resource_opts
-        assert spec.cluster_mode == orphan_revision_creator.resource_spec.cluster_mode
-        assert spec.cluster_size == orphan_revision_creator.resource_spec.cluster_size
-        assert spec.model_id == orphan_revision_creator.mounts.model_vfolder_id
-        assert (
-            spec.model_mount_destination == orphan_revision_creator.mounts.model_mount_destination
-        )
-        assert spec.model_definition_path == orphan_revision_creator.mounts.model_definition_path
-        assert spec.model_definition is None
-        assert spec.startup_command == orphan_revision_creator.execution.startup_command
-        assert spec.bootstrap_script == orphan_revision_creator.execution.bootstrap_script
-        assert spec.environ == orphan_revision_creator.execution.environ
-        assert spec.callback_url is None
-        assert spec.runtime_variant == RuntimeVariant.VLLM
-        assert spec.extra_mounts == []
-
-    async def test_create_model_revision_with_none_environ(
-        self,
-        processors: DeploymentProcessors,
-        mock_deployment_repository: MagicMock,
-        orphan_revision_creator_with_none_environ: ModelRevisionCreator,
-    ) -> None:
-        """None environ and resource_opts should be converted to empty dict."""
-        action = CreateModelRevisionAction(creator=orphan_revision_creator_with_none_environ)
-        await processors.create_model_revision.wait_for_complete(action)
-
-        creator_arg = mock_deployment_repository.create_revision.call_args[0][1]
-        spec = creator_arg.spec
-        assert spec.environ == {}
-        assert spec.resource_opts == {}
-
-
 class TestServiceDefinitionMerge(ModelRevisionFixtures):
     """Tests for service definition merging in revision creation."""
 
@@ -607,6 +464,7 @@ class TestServiceDefinitionMerge(ModelRevisionFixtures):
         self,
         processors: DeploymentProcessors,
         mock_deployment_repository: MagicMock,
+        deployment_id: uuid.UUID,
         revision_creator: ModelRevisionCreator,
         setup_mock_service_definition: Callable[[ModelServiceDefinition], None],
     ) -> None:
@@ -617,8 +475,8 @@ class TestServiceDefinitionMerge(ModelRevisionFixtures):
             )
         )
 
-        action = CreateModelRevisionAction(creator=revision_creator)
-        await processors.create_model_revision.wait_for_complete(action)
+        action = AddModelRevisionAction(deployment_id=deployment_id, adder=revision_creator)
+        await processors.add_model_revision.wait_for_complete(action)
 
         spec = mock_deployment_repository.create_revision.call_args[0][1].spec
         expected = ResourceSlot({"cpu": "4", "mem": "8g", "cuda.shares": "1.0"})
@@ -643,14 +501,15 @@ class TestServiceDefinitionMerge(ModelRevisionFixtures):
         self,
         processors: DeploymentProcessors,
         mock_deployment_repository: MagicMock,
+        deployment_id: uuid.UUID,
         revision_creator: ModelRevisionCreator,
         setup_mock_service_definition: Callable[[ModelServiceDefinition], None],
     ) -> None:
         """Service definition with None environ/resource_slots should not affect creator."""
         setup_mock_service_definition(ModelServiceDefinition(environ=None, resource_slots=None))
 
-        action = CreateModelRevisionAction(creator=revision_creator)
-        await processors.create_model_revision.wait_for_complete(action)
+        action = AddModelRevisionAction(deployment_id=deployment_id, adder=revision_creator)
+        await processors.add_model_revision.wait_for_complete(action)
 
         spec = mock_deployment_repository.create_revision.call_args[0][1].spec
         assert spec.environ == revision_creator.execution.environ

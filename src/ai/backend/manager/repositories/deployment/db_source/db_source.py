@@ -1932,7 +1932,7 @@ class DeploymentDBSource:
 
     async def create_revision(
         self,
-        deployment_id: uuid.UUID | None,
+        deployment_id: uuid.UUID,
         creator: Creator[DeploymentRevisionRow],
     ) -> ModelRevisionData:
         """Create a new deployment revision.
@@ -1942,7 +1942,7 @@ class DeploymentDBSource:
         before calling this method.
 
         Args:
-            deployment_id: The deployment to attach to. None for orphan revisions.
+            deployment_id: The deployment to attach to.
             creator: Creator containing the revision spec.
 
         If a unique constraint violation occurs, the caller should retry.
@@ -1959,31 +1959,13 @@ class DeploymentDBSource:
             db_sess.add(
                 EntityFieldRow(
                     entity_type=EntityType.MODEL_DEPLOYMENT,
-                    entity_id=str(deployment_id) if deployment_id is not None else "",
+                    entity_id=str(deployment_id),
                     field_type=FieldType.MODEL_REVISION,
                     field_id=str(pk_value),
                 )
             )
 
             return row.to_data()
-
-    async def link_revision_to_deployment(
-        self,
-        revision_id: uuid.UUID,
-        endpoint_id: uuid.UUID,
-        revision_number: int,
-    ) -> None:
-        """Link an orphan revision to a deployment.
-
-        Updates the revision's endpoint and revision_number fields.
-        """
-        async with self._begin_session_read_committed() as db_sess:
-            query = (
-                sa.update(DeploymentRevisionRow)
-                .where(DeploymentRevisionRow.id == revision_id)
-                .values(endpoint=endpoint_id, revision_number=revision_number)
-            )
-            await db_sess.execute(query)
 
     async def get_revision(
         self,

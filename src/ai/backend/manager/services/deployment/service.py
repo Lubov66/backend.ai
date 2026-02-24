@@ -109,10 +109,6 @@ from ai.backend.manager.services.deployment.actions.model_revision.add_model_rev
     AddModelRevisionAction,
     AddModelRevisionActionResult,
 )
-from ai.backend.manager.services.deployment.actions.model_revision.create_model_revision import (
-    CreateModelRevisionAction,
-    CreateModelRevisionActionResult,
-)
 from ai.backend.manager.services.deployment.actions.model_revision.get_revision_by_id import (
     GetRevisionByIdAction,
     GetRevisionByIdActionResult,
@@ -573,38 +569,6 @@ class DeploymentService:
         revision_data = await self._build_revision(action.deployment_id, action.adder)
         return AddModelRevisionActionResult(revision=revision_data)
 
-    async def create_model_revision(
-        self, action: CreateModelRevisionAction
-    ) -> CreateModelRevisionActionResult:
-        """Create an orphan revision not attached to any deployment."""
-        revision_creator = action.creator
-
-        merged_creator = await self._merge_service_definition(revision_creator)
-
-        spec = DeploymentRevisionCreatorSpec(
-            revision_number=0,
-            image_id=merged_creator.image_id,
-            resource_group=merged_creator.resource_group_name,
-            resource_slots=ResourceSlot(merged_creator.resource_spec.resource_slots),
-            resource_opts=merged_creator.resource_spec.resource_opts or {},
-            cluster_mode=merged_creator.resource_spec.cluster_mode,
-            cluster_size=merged_creator.resource_spec.cluster_size,
-            model_id=merged_creator.mounts.model_vfolder_id,
-            model_mount_destination=merged_creator.mounts.model_mount_destination,
-            model_definition_path=merged_creator.mounts.model_definition_path,
-            model_definition=None,
-            startup_command=merged_creator.execution.startup_command,
-            bootstrap_script=merged_creator.execution.bootstrap_script,
-            environ=merged_creator.execution.environ or {},
-            callback_url=str(merged_creator.execution.callback_url)
-            if merged_creator.execution.callback_url
-            else None,
-            runtime_variant=merged_creator.execution.runtime_variant,
-            extra_mounts=[],
-        )
-        revision_data = await self._deployment_repository.create_revision(None, Creator(spec=spec))
-        return CreateModelRevisionActionResult(revision=revision_data)
-
     async def get_revision_by_id(
         self, action: GetRevisionByIdAction
     ) -> GetRevisionByIdActionResult:
@@ -633,9 +597,6 @@ class DeploymentService:
     ) -> ActivateRevisionActionResult:
         """Activate a specific revision to be the current revision.
 
-        If the revision is an orphan (not attached to any deployment),
-        it will be linked to the deployment first.
-
         Args:
             action: Action containing deployment and revision IDs
 
@@ -645,22 +606,12 @@ class DeploymentService:
         # 1. Validate revision exists (raises exception if not found)
         _revision = await self._deployment_repository.get_revision(action.revision_id)
 
-        # 2. If orphan revision, link it to the deployment first
-        if _revision.is_orphan:
-            latest_revision_number = await self._deployment_repository.get_latest_revision_number(
-                action.deployment_id
-            )
-            next_revision_number = (latest_revision_number or 0) + 1
-            await self._deployment_repository.link_revision_to_deployment(
-                action.revision_id, action.deployment_id, next_revision_number
-            )
-
-        # 3. Update endpoint.current_revision and get previous revision
+        # 2. Update endpoint.current_revision and get previous revision
         previous_revision_id = await self._deployment_repository.update_current_revision(
             action.deployment_id, action.revision_id
         )
 
-        # 4. Trigger lifecycle check to update routes with new revision
+        # 3. Trigger lifecycle check to update routes with new revision
         await self._deployment_controller.mark_lifecycle_needed(
             DeploymentLifecycleType.CHECK_REPLICA
         )
@@ -672,7 +623,7 @@ class DeploymentService:
             previous_revision_id,
         )
 
-        # 5. Get updated deployment info
+        # 4. Get updated deployment info
         deployment_info = await self._deployment_repository.get_endpoint_info(action.deployment_id)
 
         return ActivateRevisionActionResult(
