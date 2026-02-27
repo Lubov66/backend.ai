@@ -117,7 +117,7 @@ jobs:
           exit 1
         fi
     - name: Upload pants log
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: pants.lint-and-typecheck.log
         path: .pants.d/workdir/pants.log
@@ -261,7 +261,7 @@ jobs:
           pants test --changed-since=$BASE_REF --changed-dependents=transitive -- -v
         fi
     - name: Upload pants log
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: pants.test.log
         path: .pants.d/workdir/pants.log
@@ -323,12 +323,12 @@ jobs:
         mv dist/checksum.txt dist/checksum-${platform_suffix}.txt
         rm dist/*.sha256
     - name: Upload scies
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: scies-${{ matrix.os }}
         path: dist/*
     - name: Upload pants log
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: pants-${{ matrix.os }}.build-scies.log
         path: .pants.d/workdir/pants.log
@@ -369,14 +369,14 @@ jobs:
       run: |
         ./scripts/build-wheels.sh
     - name: Upload wheels
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: wheels
         path: |
           dist/*
           !dist/export/
     - name: Upload pants log
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: pants.build-wheels.log
         path: .pants.d/workdir/pants.log
@@ -426,12 +426,12 @@ jobs:
         ./backend.ai mgr api dump-gql-schema --v2 --output v2-schema.graphql
         ./backend.ai mgr api generate-supergraph --config configs/graphql/supergraph.yaml -o .
     - name: Upload supergraph schema
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: supergraph
         path: supergraph.graphql
     - name: Upload pants log
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: pants.build-supergraph.log
         path: .pants.d/workdir/pants.log
