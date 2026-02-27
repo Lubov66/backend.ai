@@ -38,6 +38,12 @@ def register_deployment_routes(deps: ModuleDeps) -> RouteRegistry:
     # Revision routes (nested under deployment)
     reg.add(
         "POST",
+        "/{deployment_id}/revisions",
+        handler.add_revision,
+        middlewares=[auth_required],
+    )
+    reg.add(
+        "POST",
         "/{deployment_id}/revisions/search",
         handler.search_revisions,
         middlewares=[auth_required],

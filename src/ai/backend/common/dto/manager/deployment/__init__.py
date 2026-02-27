@@ -5,6 +5,7 @@ Common DTOs for deployment system used by both Client SDK and Manager.
 from __future__ import annotations
 
 from .request import (
+    AddRevisionRequest,
     BlueGreenConfigInput,
     ClusterConfigInput,
     CreateDeploymentRequest,
@@ -32,6 +33,7 @@ from .request import (
 )
 from .response import (
     ActivateRevisionResponse,
+    AddRevisionResponse,
     ClusterConfigDTO,
     CreateDeploymentResponse,
     CursorPaginationInfo,
@@ -100,6 +102,7 @@ __all__ = (
     "RevisionInput",
     # Request DTOs - Create/Update requests
     "CreateDeploymentRequest",
+    "AddRevisionRequest",
     "UpdateDeploymentRequest",
     "UpdateRouteTrafficStatusRequest",
     # Response DTOs - Data
@@ -120,6 +123,7 @@ __all__ = (
     "UpdateDeploymentResponse",
     "DestroyDeploymentResponse",
     "GetRevisionResponse",
+    "AddRevisionResponse",
     "ListRevisionsResponse",
     "ActivateRevisionResponse",
     "DeactivateRevisionResponse",

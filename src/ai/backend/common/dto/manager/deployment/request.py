@@ -34,6 +34,7 @@ __all__ = (
     "SearchRoutesRequest",
     # Create requests
     "CreateDeploymentRequest",
+    "AddRevisionRequest",
     # Update requests
     "UpdateDeploymentRequest",
     "UpdateRouteTrafficStatusRequest",
@@ -283,3 +284,9 @@ class CreateDeploymentRequest(BaseRequestModel):
     )
     desired_replica_count: int = Field(ge=0, description="Desired number of replicas")
     initial_revision: RevisionInput = Field(description="Initial revision configuration")
+
+
+class AddRevisionRequest(BaseRequestModel):
+    """Request to add a new revision to an existing deployment."""
+
+    revision: RevisionInput = Field(description="Revision configuration")
