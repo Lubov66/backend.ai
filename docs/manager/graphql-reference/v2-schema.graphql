@@ -5885,6 +5885,9 @@ type Role implements Node {
 
   """Permissions associated with this role."""
   permissions(filter: PermissionFilter = null, orderBy: PermissionOrderBy = null, before: String = null, after: String = null, first: Int = null, last: Int = null, limit: Int = null, offset: Int = null): PermissionConnection!
+
+  """User assignments for this role."""
+  roleAssignments(before: String = null, after: String = null, first: Int = null, last: Int = null, limit: Int = null, offset: Int = null): RoleAssignmentConnection!
 }
 
 """Added in 26.3.0. RBAC role assignment (user-role association)"""

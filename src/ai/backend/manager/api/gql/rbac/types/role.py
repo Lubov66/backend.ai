@@ -176,6 +176,33 @@ class RoleGQL(Node):
             offset=offset,
         )
 
+    @strawberry.field(description="User assignments for this role.")  # type: ignore[misc]
+    async def role_assignments(
+        self,
+        info: Info[StrawberryGQLContext],
+        before: str | None = None,
+        after: str | None = None,
+        first: int | None = None,
+        last: int | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> RoleAssignmentConnection:
+        from ai.backend.manager.api.gql.rbac.fetcher.role import fetch_role_assignments
+
+        # Add role_id filter to scope assignments to this role
+        role_filter = RoleAssignmentFilter(role_id=uuid.UUID(self.id))
+
+        return await fetch_role_assignments(
+            info,
+            filter=role_filter,
+            before=before,
+            after=after,
+            first=first,
+            last=last,
+            limit=limit,
+            offset=offset,
+        )
+
 
 @strawberry.type(
     name="RoleAssignment",
