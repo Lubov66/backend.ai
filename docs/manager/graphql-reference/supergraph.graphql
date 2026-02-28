@@ -7852,6 +7852,14 @@ type PermissionEdge
   node: Permission!
 }
 
+"""Added in 26.3.0. Valid scope-entity type combination for RBAC permissions."""
+type ScopeEntityCombination
+  @join__type(graph: STRAWBERRY)
+{
+  scopeType: RBACElementType!
+  validEntityTypes: [RBACElementType!]!
+}
+
 """Added in 26.3.0. Filter for scoped permissions"""
 input PermissionFilter
   @join__type(graph: STRAWBERRY)
@@ -9342,6 +9350,9 @@ type Query
   Added in 26.3.0. Search entity associations (admin only). Optionally filter by entity_type and entity_id.
   """
   adminEntities(filter: EntityFilter = null, orderBy: [EntityOrderBy!] = null, before: String = null, after: String = null, first: Int = null, last: Int = null, limit: Int = null, offset: Int = null): EntityConnection! @join__field(graph: STRAWBERRY)
+
+  """Added in 26.3.0. List valid RBAC scope-entity type combinations."""
+  rbacScopeEntityCombinations: [ScopeEntityCombination!]! @join__field(graph: STRAWBERRY)
 
   """Added in 26.2.0. Query kernels within a specific session."""
   sessionKernelsV2(scope: SessionScope!, filter: KernelV2Filter = null, orderBy: [KernelV2OrderBy!] = null, before: String = null, after: String = null, first: Int = null, last: Int = null, limit: Int = null, offset: Int = null): KernelV2Connection @join__field(graph: STRAWBERRY)

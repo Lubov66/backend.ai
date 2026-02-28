@@ -21,6 +21,7 @@ from .permission import (
     PermissionOrderBy,
     PermissionOrderField,
     RBACElementTypeGQL,
+    ScopeEntityCombinationGQL,
 )
 from .role import (
     AssignRoleInput,
@@ -94,4 +95,6 @@ __all__ = [
     "EntityNode",
     "EntityEdge",
     "EntityConnection",
+    # Scope-entity combination
+    "ScopeEntityCombinationGQL",
 ]
