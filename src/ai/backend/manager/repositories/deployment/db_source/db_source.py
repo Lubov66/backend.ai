@@ -1415,8 +1415,9 @@ class DeploymentDBSource:
         self,
         scale_out_creators: Sequence[Creator[RoutingRow]],
         scale_in_updater: BatchUpdater[RoutingRow] | None,
+        promote_updater: BatchUpdater[RoutingRow] | None = None,
     ) -> None:
-        """Scale out/in routes based on provided creators and updater."""
+        """Scale out/in/promote routes based on provided creators and updaters."""
         async with self._begin_session_read_committed() as db_sess:
             # Scale out routes
             for creator in scale_out_creators:
@@ -1424,6 +1425,9 @@ class DeploymentDBSource:
             # Scale in routes
             if scale_in_updater:
                 await execute_batch_updater(db_sess, scale_in_updater)
+            # Promote routes (blue-green)
+            if promote_updater:
+                await execute_batch_updater(db_sess, promote_updater)
 
     # Route operations
 
