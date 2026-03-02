@@ -63,7 +63,7 @@ class DeploymentStrategyEvaluator:
         policy_map = await self._deployment_repo.fetch_deployment_policies_by_endpoint_ids(
             endpoint_ids
         )
-        route_map = await self._deployment_repo.fetch_active_routes_by_endpoint_ids(endpoint_ids)
+        route_map = await self._deployment_repo.fetch_routes_by_endpoint_ids(endpoint_ids)
 
         # ── 2. Per-deployment evaluation ──
         all_scale_out: list[Creator[RoutingRow]] = []
